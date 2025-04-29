@@ -1,4 +1,3 @@
-```markdown
 # Azure SOC Home Lab - Honeypot + Sentinel SIEM
 
 This project documents the creation of my first cybersecurity home lab using Microsoft Azure.  
@@ -25,7 +24,7 @@ To build a vulnerable lab environment on Azure that allows for:
 - **Name**: `EW-SOC-Lab`
 - **Region**: `East US`
 
-  images/Resource Group Creation.png
+![Resource Group Creation](images/Resource%20Group%20Creation.png)
 
 ### 3. Virtual Network
 - **Name**: `Vnet-soc-lab`
@@ -51,10 +50,6 @@ To build a vulnerable lab environment on Azure that allows for:
 - Made 4 failed login attempts to generate Event ID `4625`
 - Used **Event Viewer** to verify logs under `Windows Logs > Security`
 
-### Log Analytics Workspace
-- **Name**: `LAW-soc-lab-0001`
-- Logs sent to Microsoft Sentinel for analysis
-
 ---
 
 ## 📈 SIEM Configuration (Microsoft Sentinel)
@@ -69,65 +64,3 @@ To build a vulnerable lab environment on Azure that allows for:
 SecurityEvent
 | where EventID == 4625
 | project TimeGenerated, Account, Computer, IpAddress
-```
-windows vm attack map.png
----
-
-## 🌍 Geolocation & Visualization
-
-- Uploaded a `geoip.csv` to Microsoft Sentinel Watchlist
-- Queried using:
-```kusto
-_GetWatchlist("geoip")
-```
-- Created a visual **attack map** using a custom Workbook JSON (`map.json`)
-
----
-
-## 📁 Project Structure
-
-```plaintext
-home-lab/
-│
-├── README.md
-├── /images    <- Screenshots of setup and logs    
-└── LICENSE    <- MIT License              
-```
-
----
-
-## 📸 Screenshots
-
-All screenshots are stored in the `/images` directory, including:
-- Resource Group creation
-- NSG configuration
-- Event Viewer logs
-- KQL queries
-- Geolocation results
-- Sentinel attack map
-
----
-
-## ✅ Project Status
-
-- [x] Azure infrastructure created
-- [x] Honeypot deployed
-- [x] Logs collected successfully
-- [x] Sentinel SIEM integrated
-- [x] GeoIP Watchlist and Attack Map functional
-
----
-
-## 🚧 Future Improvements
-
-- Add Active Directory simulation (Windows Server)
-- Enable alerting rules in Sentinel
-- Automate log parsing and alert response
-
----
-
-## 📜 License
-
-This project is licensed under the MIT License.  
-Feel free to use it for personal or educational purposes.
-
