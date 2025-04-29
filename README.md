@@ -70,7 +70,7 @@ SecurityEvent
 | where EventID == 4625
 | project TimeGenerated, Account, Computer, IpAddress
 ```
-
+windows vm attack map.png
 ---
 
 ## 🌍 Geolocation & Visualization
