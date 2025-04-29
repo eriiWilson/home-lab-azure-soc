@@ -30,6 +30,7 @@ To build a vulnerable lab environment on Azure that allows for:
 
 ![Resource Group Creation](images/Resource%20Group%20Creation.png)
 
+
 ### 3. Virtual Network
 - **Name**: `Vnet-soc-lab`
 - **Address Space**: `10.0.0.0/16`
