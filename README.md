@@ -133,5 +133,3 @@ All screenshots are stored in the `/images` directory, including:
 
 This project is licensed under the MIT License.  
 Feel free to use it for personal or educational purposes.
-```
-
