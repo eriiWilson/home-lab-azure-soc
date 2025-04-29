@@ -88,8 +88,9 @@ _GetWatchlist("geoip")
 home-lab/
 │
 ├── README.md
-├── /images               <- Screenshots of setup and logs
-└── LICENSE               <- MIT License
+├── /images    <- Screenshots of setup and logs
+├── /notes     <- Notes i did in the hands on      
+└── LICENSE    <- MIT License              
 ```
 
 ---
