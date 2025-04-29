@@ -1,6 +1,4 @@
 
-# 📄 README.md (corrigido com imagens)
-
 ```markdown
 # Azure SOC Home Lab - Honeypot + Sentinel SIEM
 
