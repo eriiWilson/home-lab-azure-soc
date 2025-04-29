@@ -28,8 +28,7 @@ To build a vulnerable lab environment on Azure that allows for:
 - **Name**: `EW-SOC-Lab`
 - **Region**: `East US`
 
-![Resource Group Creation](images/Resource%20Group%20Creation.png)
-
+![Resource Group Creation](images/resource%20group%20creation.png)
 
 
 ### 3. Virtual Network
