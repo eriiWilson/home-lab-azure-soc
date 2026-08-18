@@ -1,135 +1,197 @@
+# Azure SOC Home Lab
 
-```markdown
-# Azure SOC Home Lab - Honeypot + Sentinel SIEM
+This repository documents a small security monitoring lab I built while learning Microsoft Azure and Microsoft Sentinel.
 
-This project documents the creation of my first cybersecurity home lab using Microsoft Azure.  
-The goal is to simulate real-world attack scenarios using a Windows honeypot and analyze the logs with Microsoft Sentinel.
+The lab used a Windows virtual machine exposed to the internet to generate authentication events. These events were collected in a Log Analytics workspace and analyzed with KQL in Microsoft Sentinel.
 
----
+This was a temporary learning environment, not a production-ready architecture.
 
-## 🧠 Objective
+## What I wanted to learn
 
-To build a vulnerable lab environment on Azure that allows for:
-- Simulated attacker behavior
-- Log collection and analysis
-- SIEM monitoring with Microsoft Sentinel
+My main goal was to understand the basic flow between an Azure resource and a SIEM:
 
----
+1. Generate security events on a Windows virtual machine.
+2. Send the events to Azure.
+3. Find relevant records using KQL.
+4. Enrich source IP addresses with geographical data.
+5. Display the results in a Microsoft Sentinel workbook.
 
-## 🏗️ Lab Architecture
+## Architecture
 
-### 1. Azure Account
-- Free-tier Azure account created using:  
-  [https://azure.microsoft.com/en-us/pricing/purchase-options/azure-account](https://azure.microsoft.com/en-us/pricing/purchase-options/azure-account)
+The environment contained the following resources:
 
-### 2. Resource Group
-- **Name**: `EW-SOC-Lab`
-- **Region**: `East US`
+- Azure resource group
+- Virtual network and subnet
+- Windows 10 virtual machine
+- Network Security Group
+- Log Analytics workspace
+- Azure Monitor Agent
+- Data Collection Rule
+- Microsoft Sentinel
+- Sentinel watchlist
+- Custom workbook
 
+```text
+Internet
+   |
+   v
+Public IP
+   |
+Network Security Group
+   |
+Windows 10 VM
+   |
+Azure Monitor Agent
+   |
+Data Collection Rule
+   |
+Log Analytics Workspace
+   |
+Microsoft Sentinel
+   |
+KQL queries and workbook
 ```
 
-![Resource Group Creation](images/resource%20group%20creation.png)
+## Azure resources
 
+| Resource | Configuration |
+|---|---|
+| Resource group | `EW-SOC-Lab` |
+| Region | East US |
+| Virtual network | `Vnet-soc-lab` |
+| Address space | `10.0.0.0/16` |
+| Subnet | `10.0.0.0/24` |
+| Virtual machine | `CORP-NET-EAST-1` |
+| Operating system | Windows 10 Pro |
+| VM size | `Standard_B1s` |
 
+![Resource group creation](images/resource%20group%20creation.png)
+
+## Virtual machine exposure
+
+For this lab, the virtual machine received a public IP address and its inbound network rules were intentionally made permissive.
+
+Windows Firewall was also disabled during the test.
+
+This configuration made the machine deliberately vulnerable and should not be reproduced in a production environment. A safer version of the lab should limit the exposure time, avoid storing real data and remove all resources after testing.
+
+Credentials and complete public IP addresses are not included in this repository.
+
+## Generating authentication events
+
+I first generated failed sign-in events manually by attempting to authenticate with invalid credentials.
+
+I then opened Windows Event Viewer and checked:
+
+```text
+Windows Logs > Security
 ```
-### 3. Virtual Network
-- **Name**: `Vnet-soc-lab`
-- **Address Space**: `10.0.0.0/16`
-- **Subnet**: `10.0.0.0/24`
 
-### 4. Honeypot Virtual Machine
-- **Name**: `CORP-NET-EAST-1`
-- **OS**: `Windows 10 Pro`
-- **Size**: `Standard_B1s`
-- **Public IP**: Enabled
-- **Firewall**: Disabled via `wf.msc`
-- **NSG**: All inbound traffic allowed (`Any → Any`)
-- **Username**: `labuser`
-- **Password**: `@labuser@365`
+The failed authentication attempts appeared as Windows Security Event ID `4625`.
 
----
+This confirmed that Windows was recording the events locally before I configured their collection in Azure.
 
-## 🧪 Attack Simulation & Log Collection
+## Connecting the VM to Microsoft Sentinel
 
-### Actions Performed:
-- Ping tested the public IP (`52.x.x.x`)
-- Made 4 failed login attempts to generate Event ID `4625`
-- Used **Event Viewer** to verify logs under `Windows Logs > Security`
+I created a Log Analytics workspace and enabled Microsoft Sentinel on it.
 
----
+To collect Windows security events, I:
 
-## 📈 SIEM Configuration (Microsoft Sentinel)
+1. Installed the Windows Security Events solution from Content Hub.
+2. Installed the Azure Monitor Agent on the virtual machine.
+3. Created a Data Collection Rule.
+4. Associated the rule with the Windows VM.
+5. Confirmed that security events were reaching the workspace.
 
-- Enabled Microsoft Sentinel on the LAW workspace
-- Installed `Windows Security Events` content from Content Hub
-- Created **Data Collection Rule** via Azure Monitor Agent (AMA)
-- Ran queries using **KQL Mode**
+I used the following KQL query to find failed authentication events:
 
-#### Example KQL Query:
 ```kusto
 SecurityEvent
 | where EventID == 4625
-| project TimeGenerated, Account, Computer, IpAddress
+| project TimeGenerated, Computer, Account, IpAddress
+| order by TimeGenerated desc
 ```
 
-![Windows VM Attack Map](images/windows%20vm%20attack%20map.png)
+This query filters the `SecurityEvent` table for failed logon events and returns the time, computer, account and source IP address associated with each record.
 
----
+## IP geolocation
 
-## 🌍 Geolocation & Visualization
+To add geographical context to the source IP addresses, I uploaded a GeoIP dataset as a Microsoft Sentinel watchlist.
 
-- Uploaded a `geoip.csv` to Microsoft Sentinel Watchlist
-- Queried using:
+The watchlist could be inspected with:
+
 ```kusto
 _GetWatchlist("geoip")
 ```
-- Created a visual **attack map** using a custom Workbook JSON (`map.json`)
 
----
+I then used the IP information from the security events together with the watchlist data to identify approximate locations.
 
-## 📁 Project Structure
+Geolocation based on an IP address is not exact. The results indicate the approximate location associated with an address and should not be treated as proof of an attacker's physical location.
 
-```plaintext
-home-lab/
-│
+## Workbook visualization
+
+I imported a custom workbook definition from `map.json` to display authentication activity on a map.
+
+![Windows VM attack map](images/windows%20vm%20attack%20map.png)
+
+The workbook helped me understand how raw Windows events can be transformed into a more readable security monitoring view.
+
+## What I learned
+
+This project helped me understand:
+
+- How Windows records failed authentication attempts.
+- How the Azure Monitor Agent collects events from a VM.
+- The role of a Data Collection Rule.
+- How Log Analytics and Microsoft Sentinel work together.
+- How to filter security events using KQL.
+- How watchlists can enrich event data.
+- Why publicly exposed services generate security events quickly.
+- Why permissive NSG rules and disabled host firewalls are unsafe outside an isolated lab.
+
+## Limitations
+
+This was an introductory lab with a deliberately simple architecture.
+
+It did not include:
+
+- Automated incident response.
+- Custom analytics rules.
+- Microsoft Entra ID integration.
+- A Windows domain environment.
+- Long-term monitoring.
+- Infrastructure as code.
+- Production security controls.
+
+The failed sign-in events generated manually were useful for validating the data pipeline, but they should not be described as a complete real-world attack simulation.
+
+## Possible improvements
+
+Future versions of the lab could include:
+
+- More restrictive NSG rules and controlled exposure.
+- Microsoft Sentinel analytics rules.
+- Alerts for repeated authentication failures.
+- Incident creation and investigation.
+- Microsoft Entra ID authentication logs.
+- Infrastructure deployment with Bicep or Terraform.
+- Automated resource cleanup to control Azure costs.
+- Documentation of the resource removal process.
+
+## Repository structure
+
+```text
+.
 ├── README.md
-├── /images               <- Screenshots of setup and logs
-└── LICENSE               <- MIT License
+├── images/
+├── map.json
+└── LICENSE
 ```
 
----
+The `images` directory contains screenshots of the Azure resources, Windows events, KQL results and Sentinel workbook.
 
-## 📸 Screenshots
+## Disclaimer
 
-All screenshots are stored in the `/images` directory, including:
-- Resource Group creation
-- NSG configuration
-- Event Viewer logs
-- KQL queries
-- Geolocation results
-- Sentinel attack map
+This project was created for educational purposes in an isolated Azure environment.
 
----
-
-## ✅ Project Status
-
-- [x] Azure infrastructure created
-- [x] Honeypot deployed
-- [x] Logs collected successfully
-- [x] Sentinel SIEM integrated
-- [x] GeoIP Watchlist and Attack Map functional
-
----
-
-## 🚧 Future Improvements
-
-- Add Active Directory simulation (Windows Server)
-- Enable alerting rules in Sentinel
-- Automate log parsing and alert response
-
----
-
-## 📜 License
-
-This project is licensed under the MIT License.  
-Feel free to use it for personal or educational purposes.
+Do not expose a virtual machine with unrestricted inbound access, disabled firewall protection, reused credentials or sensitive information.
